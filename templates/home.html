@@ -1,0 +1,92 @@
+{{ template "header.html" .}}
+
+<main class="mx-auto h-full max-w-xl px-3 w-full flex-grow">
+    <div class="py-7" hx-boost="true">
+        <div hx-trigger="load" hx-get="/checkForWork" hx-swap="outerHTML">
+        </div>
+        <div class="flex justify-center w-full">
+            <div class="flex items-center">
+                <img
+                        class="w-24 h-24 rounded-full mr-4"
+                        src="../assets/data/profile.jpeg"
+                        alt="Profile Picture"
+                        width="100"
+                        height="100"
+                        />
+                <div class="flex flex-col">
+                    <p class="text-3xl font-bold">Harsh Tiwari</p>
+                    <p class="font-thin">Software Engineer</p>
+                    <div class="flex flex-row space-x-2 mt-1">
+                        <a href="mailto:h.tiwari.dev@gmail.com" >
+                            <img
+                                    src="../assets/icons/gmail-icon.svg"
+                                    alt="Github Icon"
+                                    width="20"
+                                    height="20"
+                                    />
+                        </a>
+                            <a href="https://github.com/h-tiwari-dev">
+                                <img
+                                        src="../assets/icons/github-icon.svg"
+                                        alt="Github Icon"
+                                        width="20"
+                                        height="20"
+                                        />
+                            </a>
+                            <a
+                                    href="https://www.linkedin.com/in/tiwari-ai-harsh/"
+                                    >
+                                    <img
+                                            src="../assets/icons/linkedin-icon.svg"
+                                            alt="Github Icon"
+                                            width="20"
+                                            height="20"
+                                            />
+                            </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-lg mx-auto mt-10">
+            <div class="w-full">
+                Hi, I am a Full Stack Software Engineer with over 2 years of professional experience. I primarily work with technologies such as MongoDB, Node.js, TypeScript, React.js, Angular.js, Nest.js, and PostgreSQL. I have experience in creating fintech products capable of scaling to thousands of requests per second.
+            </div>
+            <div class="mt-10">
+                <p class="text-xl">Technologies:-</p>
+                <div class="grid grid-cols-2 gap-4 mx-10" hx-get="/technologies">
+                    <ul class="list-disc">
+                        <li>Rust</li>
+                        <li>Postgres</li>
+                        <li>Next Js</li>
+                    </ul>
+                    <ul class="list-disc">
+                        <li>Nest Js</li>
+                        <li>Tailwind</li>
+                        <li>Node Js</li>
+                    </ul>
+                </div>
+                <p class="text-xl mt-5">Files:-</p>
+                <div class="flex flex-col mx-10">
+                    <div class='flex flex-row justify-between'>
+                        <p class='text-md'>Resume:</p>
+                        <a href="/download/resume" target="_blank" class="text-blue-600" hx-trigger="click">Resume.pdf</a>
+                    </div>
+                    <div class='flex flex-col w-full'>
+                        <p class='text-md'>Course Work:-</p>
+                        <ul class='mx-10 justify-end w-full text-blue-600 list-disc underline'>
+                            <li>
+                                <a href="/download/DSA" target="_blank"  hx-trigger="click">Data Structure And Algorithms specialization Certificate.pdf</a>
+                            </li>
+                            <li>
+                                <a href="/download/DLS" target="_blank"  hx-trigger="click">Deep Learning specialization Certificate.pdf</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+        {{ template "gameOfLife.html" }}
+</main>  
+
+{{ template "footer.html" .}}

@@ -1,0 +1,210 @@
+<div x-data="{ universe: null, cellSize: 5, gridColor: '#CCCCCC', deadColor: '#FFFFFF', aliveColor: '#000000' }">
+    <div x-data="{ universe: null }" x-init="initGameOfLife()">
+        <canvas x-ref="canvasRef"></canvas>
+    </div>
+</div>
+
+<script>
+    // Define the Cell enum
+    const Cell = {
+        Dead: 0,
+        Alive: 1,
+    };
+
+    // Define the Universe class
+    class Universe {
+        constructor(width, height) {
+            this.width = width;
+            this.height = height;
+            this.cells = new Array(width * height).fill(Cell.Dead);
+
+            for (let i = 0; i < width * height; i++) {
+                if (Math.random() > 0.5) {
+                    this.cells[i] = Cell.Alive;
+                }
+            }
+        }
+
+        get_index(row, column) {
+            return row * this.width + column;
+        }
+
+        live_neighbor_count(row, column) {
+            let count = 0;
+            for (let deltaRow of [-1, 0, 1]) {
+                for (let deltaColumn of [-1, 0, 1]) {
+                    if (deltaRow === 0 && deltaColumn === 0) {
+                        continue;
+                    }
+                    const neighborRow = (row + deltaRow + this.height) % this.height;
+                    const neighborColumn = (column + deltaColumn + this.width) % this.width;
+                    const idx = this.get_index(neighborRow, neighborColumn);
+                    count += this.cells[idx] === Cell.Alive ? 1 : 0;
+                }
+            }
+            return count;
+        }
+
+        tick() {
+            const next = this.cells.slice();
+
+            for (let row = 0; row < this.height; row++) {
+                for (let col = 0; col < this.width; col++) {
+                    const idx = this.get_index(row, col);
+                    const cell = this.cells[idx];
+                    const liveNeighbors = this.live_neighbor_count(row, col);
+
+                    let nextCell;
+                    if (cell === Cell.Alive) {
+                        if (liveNeighbors < 2) {
+                            nextCell = Cell.Dead;
+                        } else if (liveNeighbors === 2 || liveNeighbors === 3) {
+                            nextCell = Cell.Alive;
+                        } else {
+                            nextCell = Cell.Dead;
+                        }
+                    } else {
+                        if (liveNeighbors === 3) {
+                            nextCell = Cell.Alive;
+                        } else {
+                            nextCell = Cell.Dead;
+                        }
+                    }
+                    next[idx] = nextCell;
+                }
+            }
+            this.cells = next;
+        }
+
+        render() {
+            let result = '';
+            for (let i = 0; i < this.cells.length; i++) {
+                const cell = this.cells[i];
+                const symbol = cell === Cell.Dead ? '◻' : '◼';
+                result += symbol;
+                if ((i + 1) % this.width === 0) {
+                    result += '\n';
+                }
+            }
+            return result;
+        }
+
+        toggle_cell(row, col) {
+            const idx = this.get_index(row, col);
+            this.cells[idx] = this.cells[idx] === Cell.Dead ? Cell.Alive : Cell.Dead;
+        }
+    }
+    function initGameOfLife() {
+        const CELL_SIZE = 5;
+        const GRID_COLOR = "#CCCCCC";
+        const DEAD_COLOR = "#FFFFFF";
+        const ALIVE_COLOR = "#000000";
+
+        const universe = new Universe(90, 32); // Set your initial dimensions here
+
+        const canvasRef = document.querySelector('[x-ref="canvasRef"]');
+        const canvas = canvasRef;
+
+        canvas.height = (CELL_SIZE + 1) * universe.height + 1;
+        canvas.width = (CELL_SIZE + 1) * universe.width + 1;
+
+        const ctx = canvas.getContext("2d");
+
+        canvas.addEventListener("click", (event) => {
+            const boundingRect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / boundingRect.width;
+            const scaleY = canvas.height / boundingRect.height;
+
+            const canvasLeft = (event.clientX - boundingRect.left) * scaleX;
+            const canvasTop = (event.clientY - boundingRect.top) * scaleY;
+
+            const row = Math.min(
+                Math.floor(canvasTop / (CELL_SIZE + 1)),
+                universe.height - 1
+            );
+            const col = Math.min(
+                Math.floor(canvasLeft / (CELL_SIZE + 1)),
+                universe.width - 1
+            );
+
+            universe.toggle_cell(row, col);
+
+            drawGrid(ctx);
+            drawCells(ctx);
+        });
+
+        setInterval(() => {
+            universe.tick();
+            drawGrid(ctx);
+            drawCells(ctx);
+        }, 10);
+
+        function drawGrid(ctx) {
+            ctx.beginPath();
+            ctx.strokeStyle = GRID_COLOR;
+
+            for (let i = 0; i <= universe.width; i++) {
+                ctx.moveTo(i * (CELL_SIZE + 1) + 1, 0);
+                ctx.lineTo(
+                    i * (CELL_SIZE + 1) + 1,
+                    (CELL_SIZE + 1) * universe.height + 1
+                );
+            }
+
+            for (let j = 0; j <= universe.height; j++) {
+                ctx.moveTo(0, j * (CELL_SIZE + 1) + 1);
+                ctx.lineTo(
+                    (CELL_SIZE + 1) * universe.width + 1,
+                    j * (CELL_SIZE + 1) + 1
+                );
+            }
+
+            ctx.stroke();
+        }
+
+        function getIndex(row, column) {
+            return row * universe.width + column;
+        }
+
+        function drawCells(ctx) {
+            ctx.beginPath();
+
+            for (let row = 0; row < universe.height; row++) {
+                for (let column = 0; column < universe.width; column++) {
+                    const idx = getIndex(row, column);
+
+                    ctx.fillStyle =
+                        universe.cells[idx] === Cell.Dead ? DEAD_COLOR : ALIVE_COLOR;
+
+                    ctx.fillRect(
+                        column * (CELL_SIZE + 1) + 1,
+                        row * (CELL_SIZE + 1) + 1,
+                        CELL_SIZE,
+                        CELL_SIZE
+                    );
+                }
+            }
+            ctx.stroke();
+        }
+
+        document.addEventListener('alpine:init', () => {
+            Alpine.data("universe", () => ({
+                universe,
+                clearAndRestart() {
+                    universe.cells = new Array(universe.width * universe.height).fill(Cell.Dead);
+
+                    for (let i = 0; i < universe.width * universe.height; i++) {
+                        if (Math.random() > 0.5) {
+                            universe.cells[i] = Cell.Alive;
+                        }
+                    }
+
+                    drawGrid(ctx);
+                    drawCells(ctx);
+                },
+            }));
+        })
+    }
+</script>
+
+
