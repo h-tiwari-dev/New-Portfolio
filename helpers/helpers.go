@@ -3,6 +3,10 @@ package helpers
 import (
 	"crypto/rand"
 	"math/big"
+	"net/http"
+	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 var chars = []string{
@@ -31,3 +35,24 @@ func GenerateRandomString(length int) string {
 	return s
 }
 
+func FileSize(filePath string) int64 {
+	file, err := os.Stat(filePath)
+	if err != nil {
+		return 0
+	}
+	return file.Size()
+}
+
+// Render one of HTML or JSON based on the 'Accept' header of the request
+// If the header doesn't specify this, HTML is rendered, provided that
+// the template name is present
+func Render(c *gin.Context, data gin.H, templateName string) {
+	switch c.Request.Header.Get("Accept") {
+	case "application/json":
+		// Respond with JSON
+		c.JSON(http.StatusOK, data["payload"])
+	default:
+		// Respond with HTML
+		c.HTML(http.StatusOK, templateName, data)
+	}
+}

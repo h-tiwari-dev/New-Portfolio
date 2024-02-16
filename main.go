@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/ulule/limiter/v3"
 	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
@@ -42,15 +40,4 @@ func main() {
 	InitializeRoutes()
 
 	router.Run()
-}
-
-func render(c *gin.Context, data gin.H, templateName string) {
-	switch c.Request.Header.Get("Accept") {
-	case "application/json":
-		// Respond with JSON
-		c.JSON(http.StatusOK, data["payload"])
-	default:
-		// Respond with HTML
-		c.HTML(http.StatusOK, templateName, data)
-	}
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
+
+	"app/handlers"
 )
 
 type NavItem struct {
@@ -11,6 +13,6 @@ type NavItem struct {
 }
 
 var navItems = []NavItem{
-	{Name: "/home", URL: "/", Renderer: Home},
-	// {Name: "/blogs", URL: "/blogs", Renderer: Blogs},
+	{Name: "/home", URL: "/", Renderer: handlers.Home},
+	{Name: "/blogs", URL: "/blogs", Renderer: handlers.Blogs},
 }
