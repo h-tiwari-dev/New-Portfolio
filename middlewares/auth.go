@@ -49,7 +49,7 @@ func Authenticator(isAdmin bool) gin.HandlerFunc {
 			return
 		}
 
-		if user.Role != "admin" {
+		if isAdmin && user.Role != "admin" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User is not a Admin"})
 			c.Abort()
 			return

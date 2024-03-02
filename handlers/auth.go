@@ -13,8 +13,23 @@ import (
 	"app/models"
 )
 
-func signupHandler(c *gin.Context) {
+func (h *Handlers) SignupHandler(c *gin.Context) {
 	var user models.User
+
+	role := c.PostForm("role")
+	switch role {
+	case "user":
+		role = "user"
+	case "admin":
+		adminKey := c.GetHeader("Admin-Key")
+		if adminKey != os.Getenv("ADMIN_KEY") {
+			c.JSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+	default:
+		role = "user"
+	}
+
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -27,7 +42,7 @@ func signupHandler(c *gin.Context) {
 	}
 
 	user.Password = string(hashedPassword)
-	user.Role = "user"
+	user.Role = role
 
 	if err := db.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
@@ -37,7 +52,7 @@ func signupHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "User created successfully"})
 }
 
-func loginHandler(c *gin.Context) {
+func (h *Handlers) LoginHandler(c *gin.Context) {
 	var request struct {
 		Username string `json:"username" binding:"required"`
 		Password string `json:"password" binding:"required"`
@@ -59,7 +74,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	tokenString, err := generateJWTToken(user)
+	tokenString, err := h.generateJWTToken(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate JWT token"})
 		return
@@ -68,7 +83,7 @@ func loginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"token": tokenString})
 }
 
-func generateJWTToken(user models.User) (string, error) {
+func (h *Handlers) generateJWTToken(user models.User) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	jwtKey := []byte(os.Getenv("JWT_SECRET"))
 

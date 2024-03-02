@@ -21,6 +21,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/gomarkdown/markdown v0.0.0-20231222211730-1d6d20845b47 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect
@@ -40,6 +41,7 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
 	github.com/modern-go/reflect2 v0.0.0-20180701023420-4b7aa43c6742 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/sys v0.17.0 // indirect

@@ -9,7 +9,7 @@
         {{range .blogs}}
         <div 
             class="flex w-full cursor-pointer" 
-            href="/blog/{{.Heading}}" 
+            href="/blog/{{.ID}}" 
             hx-trigger="mouseenter mouseleave" 
             hx-swap="outerHTML"
             x-data="{ isHovered: false }"
@@ -21,9 +21,9 @@
                 @mouseleave="isHovered = false"
             >
                 <div class="text-3xl font-semibold text-black capitalize">
-                    {{.Heading}}
+                    {{.Title}}
                 </div>
-                <p>{{.Content}}</p>
+                <p>{{.Description}}</p>
             </div>
         </div>
         {{end}}

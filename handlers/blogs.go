@@ -6,12 +6,15 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gomarkdown/markdown"
+	md_html "github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
 
 	"app/db"
 	"app/models"
 )
 
-func CreateBlog(c *gin.Context) {
+func (h *Handlers) CreateBlog(c *gin.Context) {
 	var blog models.Blog
 	if err := c.ShouldBindJSON(&blog); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -20,6 +23,11 @@ func CreateBlog(c *gin.Context) {
 
 	blog.CreatedAt = time.Now()
 	blog.UpdatedAt = time.Now()
+	if blog.Content == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Content is Required."})
+		return
+	}
+	blog.Content = string(h.ConvertMdToHTML([]byte(blog.Content)))
 
 	if err := db.DB.Create(&blog).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create blog"})
@@ -29,7 +37,19 @@ func CreateBlog(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Blog created successfully", "blog": blog})
 }
 
-func GetBlogs(c *gin.Context) {
+func (h *Handlers) ConvertMdToHTML(content []byte) []byte {
+	extentions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extentions)
+	doc := p.Parse(content)
+
+	htmlFlags := md_html.CommonFlags | md_html.HrefTargetBlank
+	opts := md_html.RendererOptions{Flags: htmlFlags}
+	renderer := md_html.NewRenderer(opts)
+
+	return markdown.Render(doc, renderer)
+}
+
+func (h *Handlers) GetBlogs(c *gin.Context) {
 	var blogs []models.Blog
 	if err := db.DB.Find(&blogs).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
@@ -39,7 +59,7 @@ func GetBlogs(c *gin.Context) {
 	c.JSON(http.StatusOK, blogs)
 }
 
-func GetBlogById(c *gin.Context) {
+func (h *Handlers) GetBlogById(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid blog ID"})
@@ -55,7 +75,7 @@ func GetBlogById(c *gin.Context) {
 	c.JSON(http.StatusOK, blog)
 }
 
-func UpdateBlog(c *gin.Context) {
+func (h *Handlers) UpdateBlog(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid blog ID"})
@@ -86,7 +106,7 @@ func UpdateBlog(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Blog updated successfully", "blog": existingBlog})
 }
 
-func DeleteBlog(c *gin.Context) {
+func (h *Handlers) DeleteBlog(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid blog ID"})
