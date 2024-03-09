@@ -1,0 +1,43 @@
+# Test
+GET https://reqres.in/api/users?page=5
+
+# Create Admin
+POST http://localhost:8080/signup
+Content-Type: application/json
+Admin-Key: Julia@1984
+
+{
+    "username": "h.tiwari.dev",
+    "email": "h.tiwari.dev@gmail.com",
+    "password": "Julia@1984"
+}
+
+# Login
+
+POST http://localhost:8080/login
+Content-Type: application/json
+
+{
+    "username": "h.tiwari.dev",
+    "password": "Julia@1984"
+}
+
+# Create Blogs 
+POST http://localhost:8080/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDk1NDcwMTYsInJvbGUiOiJ1c2VyIiwidXNlcm5hbWUiOiJoLnRpd2FyaS5kZXYifQ.o2PYcosVieynIYexNWF7-aEJ2uKRwvBV_B49fjilzvA
+
+{
+    "title": "Tet title",
+    "description": "Descrption Test Article",
+    "content": < ../blogs/md/pydantic.md
+}
+
+# Get Blogs
+GET http://localhost:8080/blogs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDk1NDcwMTYsInJvbGUiOiJ1c2VyIiwidXNlcm5hbWUiOiJoLnRpd2FyaS5kZXYifQ.o2PYcosVieynIYexNWF7-aEJ2uKRwvBV_B49fjilzvA
+
+
+# Get Blog with id
+GET http://localhost:8080/blogs
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MDk1NDcwMTYsInJvbGUiOiJ1c2VyIiwidXNlcm5hbWUiOiJoLnRpd2FyaS5kZXYifQ.o2PYcosVieynIYexNWF7-aEJ2uKRwvBV_B49fjilzvA

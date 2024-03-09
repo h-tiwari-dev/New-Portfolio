@@ -35,21 +35,23 @@ func InitializeRoutes() {
 	router.POST("/signup", handlers.SignupHandler)
 	router.POST("/login", handlers.LoginHandler)
 
+	router.GET("/blogs-page/:id", func(ctx *gin.Context) {
+		handlers.BlogPage(ctx)
+	})
+	blogGroup := router.Group("/blogs")
+	blogGroup.GET("/", handlers.GetBlogs) // New route for getting all blogs
+	blogGroup.GET("/:id", handlers.GetBlogById)
+
 	// Authenticated routes
 	authGroup := router.Group("/")
 	authGroup.Use(authMiddleware)
 	{
-		// Your existing authenticated route(s)
-		// authGroup.GET("/profile", profileHandler)
-
 		// Protected routes for blogs accessible only to authenticated users
-		blogGroup := authGroup.Group("/blogs")
+		auBlogGroup := authGroup.Group("/blogs")
 		{
-			blogGroup.POST("/", handlers.CreateBlog)
-			blogGroup.GET("/", handlers.GetBlogs) // New route for getting all blogs
-			blogGroup.GET("/:id", handlers.GetBlogById)
-			blogGroup.PUT("/:id", handlers.UpdateBlog)
-			blogGroup.DELETE("/:id", handlers.DeleteBlog)
+			auBlogGroup.POST("/", handlers.CreateBlog)
+			auBlogGroup.PUT("/:id", handlers.UpdateBlog)
+			auBlogGroup.DELETE("/:id", handlers.DeleteBlog)
 		}
 	}
 }

@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"html/template"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,8 +13,60 @@ import (
 	"github.com/gomarkdown/markdown/parser"
 
 	"app/db"
+	"app/helpers"
 	"app/models"
 )
+
+func (h *Handlers) BlogsPage(title string, c *gin.Context) {
+	var blogs []models.Blog
+	// Assuming you have a GORM DB instance named "db" initialized somewhere in your code
+
+	// Fetch blogs from the database
+	if err := db.DB.Find(&blogs).Error; err != nil {
+		c.JSON(
+			http.StatusInternalServerError,
+			gin.H{"error": "Failed to retrieve blogs from the database"},
+		)
+		return
+	}
+	helpers.Render(c, gin.H{"title": title, "blogs": blogs}, "blogs.html")
+}
+
+func (h *Handlers) BlogPage(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid blog ID"})
+		return
+	}
+
+	var blog models.Blog
+	if err := db.DB.First(&blog, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Blog not found"})
+		return
+	}
+
+	contentTemplate, err := template.New("content").Parse(blog.Content)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse HTML content"})
+		return
+	}
+
+	// Execute the template to get the rendered HTML
+	var renderedContent strings.Builder
+	err = contentTemplate.Execute(&renderedContent, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to render HTML content"})
+		return
+	}
+
+	helpers.Render(c,
+		gin.H{
+			"title":   blog.Title,
+			"content": template.HTML(renderedContent.String()),
+		},
+		"blog.html",
+	)
+}
 
 func (h *Handlers) CreateBlog(c *gin.Context) {
 	var blog models.Blog

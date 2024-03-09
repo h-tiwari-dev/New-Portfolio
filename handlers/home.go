@@ -10,9 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"app/db"
 	"app/helpers"
-	"app/models"
 )
 
 const (
@@ -99,19 +97,4 @@ func (h *Handlers) LookingForWork(c *gin.Context) {
 	} else {
 		return
 	}
-}
-
-func (h *Handlers) Blogs(title string, c *gin.Context) {
-	var blogs []models.Blog
-	// Assuming you have a GORM DB instance named "db" initialized somewhere in your code
-
-	// Fetch blogs from the database
-	if err := db.DB.Find(&blogs).Error; err != nil {
-		c.JSON(
-			http.StatusInternalServerError,
-			gin.H{"error": "Failed to retrieve blogs from the database"},
-		)
-		return
-	}
-	helpers.Render(c, gin.H{"title": title, "blogs": blogs}, "blogs.html")
 }

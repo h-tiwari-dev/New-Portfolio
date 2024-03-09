@@ -25,7 +25,7 @@ func NewNav(_handlers *handlers.Handlers) *Nav {
 func (nv *Nav) getNavItems() []navItem {
 	return []navItem{
 		{Name: "/home", URL: "/", Renderer: nv.handlers.Home},
-		{Name: "/blogs", URL: "/blogs", Renderer: nv.handlers.Blogs},
+		{Name: "/blogs", URL: "/blogs-page", Renderer: nv.handlers.BlogsPage},
 	}
 }
 

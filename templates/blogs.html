@@ -7,25 +7,19 @@
 
     <div class="flex flex-col w-full justify-items-center pt-10">
         {{range .blogs}}
-        <div 
+        <a
             class="flex w-full cursor-pointer" 
-            href="/blog/{{.ID}}" 
-            hx-trigger="mouseenter mouseleave" 
-            hx-swap="outerHTML"
-            x-data="{ isHovered: false }"
+            href="/blogs-page/{{.ID}}" 
         >
             <div 
                 class="w-full mx-10 p-8 md:p-16 md:mb-32 w-10/12 border-2 bg-white border-black transition-transform transform duration-300 ease-in-out" 
-                :class="{ 'hover:scale-105': isHovered }" 
-                @mouseenter="isHovered = true"
-                @mouseleave="isHovered = false"
             >
                 <div class="text-3xl font-semibold text-black capitalize">
                     {{.Title}}
                 </div>
                 <p>{{.Description}}</p>
             </div>
-        </div>
+        </a>
         {{end}}
     </div>
 </main>  
