@@ -2,25 +2,30 @@
 
 <main class="mx-auto h-full x-3 w-full flex-grow">
     <div class="flex justify-center">
-        <p class="text-3xl font-bold">Blogs</p>
+        <p class="text-3xl font-bold underline">Blogs</p>
     </div>
 
     <div class="flex flex-col w-full justify-items-center pt-10">
-        {{range .blogs}}
-        <a
-            class="flex w-full cursor-pointer" 
-            href="/blogs-page/{{.ID}}" 
-        >
-            <div 
-                class="w-full mx-10 p-8 md:p-16 md:mb-32 w-10/12 border-2 bg-white border-black transition-transform transform duration-300 ease-in-out" 
-            >
-                <div class="text-3xl font-semibold text-black capitalize">
-                    {{.Title}}
+        <ul>
+            {{range .blogs}}
+            <div class="flex flex-row">
+                <div class="w-full mx-10 p-8 md:p-16 mb-4 md:mb-8 w-10/12 border-2 bg-white border-black">
+                    <a
+                        href="/blogs-page/{{.ID}}" 
+                    >
+                        <div 
+                            class="w-full" 
+                        >
+                            <li class="text-3xl font-semibold text-black capitalize">
+                                {{.Title}}
+                            </li>
+                            <p>{{.Description}}</p>
+                        </div>
+                    </a>
                 </div>
-                <p>{{.Description}}</p>
             </div>
-        </a>
-        {{end}}
+            {{end}}
+        </ul>
     </div>
 </main>  
 
