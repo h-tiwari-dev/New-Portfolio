@@ -26,15 +26,6 @@ func randint() int64 {
 	}
 	return nBig.Int64()
 }
-
-func GenerateRandomString(length int) string {
-	var s string
-	for i := 0; i < length; i++ {
-		s += chars[randint()]
-	}
-	return s
-}
-
 func FileSize(filePath string) int64 {
 	file, err := os.Stat(filePath)
 	if err != nil {

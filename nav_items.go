@@ -14,6 +14,7 @@ type navItem struct {
 type Nav struct {
 	handlers *handlers.Handlers
 	items    []navItem
+	router   *gin.Engine
 }
 
 func NewNav(_handlers *handlers.Handlers) *Nav {

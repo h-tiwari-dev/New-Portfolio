@@ -18,9 +18,11 @@ func routes(nav *Nav, c *gin.Context) {
 
 func InitializeRoutes() {
 	handlers := handlers.NewHandlers()
+
 	nav := NewNav(handlers)
 
 	nav.registerRoutes()
+
 	router.GET("/routes", func(ctx *gin.Context) {
 		routes(nav, ctx)
 	})
@@ -38,20 +40,17 @@ func InitializeRoutes() {
 	router.GET("/blogs-page/:id", func(ctx *gin.Context) {
 		handlers.BlogPage(ctx)
 	})
+	router.GET("/image/:id", handlers.GetImage)
+
 	blogGroup := router.Group("/blogs")
 	blogGroup.GET("/", handlers.GetBlogs) // New route for getting all blogs
 	blogGroup.GET("/:id", handlers.GetBlogById)
 
 	// Authenticated routes
-	authGroup := router.Group("/")
+	authGroup := router.Group("/auth/blogs")
 	authGroup.Use(authMiddleware)
-	{
-		// Protected routes for blogs accessible only to authenticated users
-		auBlogGroup := authGroup.Group("/blogs")
-		{
-			auBlogGroup.POST("/", handlers.CreateBlog)
-			auBlogGroup.PUT("/:id", handlers.UpdateBlog)
-			auBlogGroup.DELETE("/:id", handlers.DeleteBlog)
-		}
-	}
+
+	authGroup.POST("/", handlers.CreateBlog)
+	authGroup.PUT("/:id", handlers.UpdateBlog)
+	authGroup.DELETE("/:id", handlers.DeleteBlog)
 }

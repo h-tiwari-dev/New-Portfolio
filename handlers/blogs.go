@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -8,9 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gomarkdown/markdown"
-	md_html "github.com/gomarkdown/markdown/html"
-	"github.com/gomarkdown/markdown/parser"
+	"github.com/sirupsen/logrus"
 
 	"app/db"
 	"app/helpers"
@@ -45,7 +44,7 @@ func (h *Handlers) BlogPage(c *gin.Context) {
 		return
 	}
 
-	contentTemplate, err := template.New("content").Parse(blog.Content)
+	contentTemplate, err := template.New("content").Parse(blog.ContentHTML)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse HTML content"})
 		return
@@ -59,10 +58,29 @@ func (h *Handlers) BlogPage(c *gin.Context) {
 		return
 	}
 
+	var image models.Image
+	result := db.DB.Joins(
+		"JOIN blog_images ON blog_images.image_id = images.id",
+	).Where(
+		"blog_images.blog_id = ? AND images.top_image= ?",
+		blog.ID,
+		1,
+	).First(&image)
+
+	if result == nil {
+		h.logger.WithFields(logrus.Fields{
+			"Blog ID": blog.ID,
+		}).Info("Blog Image not found")
+	}
+	//var images []models.Image
+	//result = db.DB.Find(&images, "blog_id = ?", blog.ID)
+
 	helpers.Render(c,
 		gin.H{
 			"title":   blog.Title,
 			"content": template.HTML(renderedContent.String()),
+			"image":   base64.StdEncoding.EncodeToString(image.Data),
+			//"imagesv
 		},
 		"blog.html",
 	)
@@ -75,32 +93,49 @@ func (h *Handlers) CreateBlog(c *gin.Context) {
 		return
 	}
 
+	// Create the blog without images first
 	blog.CreatedAt = time.Now()
 	blog.UpdatedAt = time.Now()
-	if blog.Content == "" {
+	// Add all the images in the reques []models.BlogImage
+
+	var blogImages []models.Image
+
+	for _, blogImageData := range blog.Images {
+		blogImage := models.Image{
+			Filename: blogImageData.Filename,
+			Data:     blogImageData.Data,
+			TopImage: blogImageData.TopImage,
+		}
+		if err := db.DB.Create(&blogImage).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save blog images"})
+			return
+		} else {
+			blogImages = append(blogImages, blogImage)
+		}
+	}
+
+	blog.Images = blogImages
+
+	if blog.ContentMD == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Content is Required."})
 		return
 	}
-	blog.Content = string(h.ConvertMdToHTML([]byte(blog.Content)))
 
+	image_ids, htmlBytes := helpers.ConvertMdToHTML([]byte(blog.ContentMD))
+	blog.ContentHTML = string(htmlBytes)
+
+	h.logger.WithFields(logrus.Fields{
+		"image_ids": image_ids,
+	}).Info("Images Saved")
+	// Add a relation to blog
+
+	// Save the blog to the database
 	if err := db.DB.Create(&blog).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create blog"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Blog created successfully", "blog": blog})
-}
-
-func (h *Handlers) ConvertMdToHTML(content []byte) []byte {
-	extentions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
-	p := parser.NewWithExtensions(extentions)
-	doc := p.Parse(content)
-
-	htmlFlags := md_html.CommonFlags | md_html.HrefTargetBlank
-	opts := md_html.RendererOptions{Flags: htmlFlags}
-	renderer := md_html.NewRenderer(opts)
-
-	return markdown.Render(doc, renderer)
+	c.JSON(http.StatusCreated, gin.H{"message": "Blog created successfully"})
 }
 
 func (h *Handlers) GetBlogs(c *gin.Context) {
@@ -149,7 +184,7 @@ func (h *Handlers) UpdateBlog(c *gin.Context) {
 	}
 
 	existingBlog.Title = updatedBlog.Title
-	existingBlog.Content = updatedBlog.Content
+	existingBlog.ContentMD = updatedBlog.ContentMD
 	existingBlog.UpdatedAt = time.Now()
 
 	if err := db.DB.Save(&existingBlog).Error; err != nil {

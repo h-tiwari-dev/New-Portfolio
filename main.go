@@ -1,7 +1,6 @@
 package main
 
 import (
-	"app/models"
 	"github.com/gin-gonic/gin"
 	"github.com/ulule/limiter/v3"
 	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
@@ -22,7 +21,7 @@ func main() {
 	// END IP RATE LIMITER
 
 	// DB MIGRATIONS
-	models.Migrate()
+	// models.Migrate()
 	// END DB MIGRATIONS
 
 	router = gin.Default()

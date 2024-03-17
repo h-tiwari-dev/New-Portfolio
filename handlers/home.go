@@ -21,23 +21,6 @@ const (
 	ContentTypeText   = "text/plain; charset=utf-8"
 )
 
-func (h *Handlers) GenerateUrl() string {
-	var url string
-
-	urlExist := true
-	for urlExist {
-		url = helpers.GenerateRandomString(7)
-		//Verify is the url is unique
-		//list := models.List{}
-		//db.DB.Where("url = ?", url).First(&list)
-		//if list.ID == 0 {
-		//	urlExist = false
-		//}
-	}
-
-	return url
-}
-
 func (h *Handlers) Home(title string, c *gin.Context) {
 	helpers.Render(c, gin.H{"title": title}, "home.html")
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // DB SERVER (AWS)
@@ -35,7 +36,9 @@ func dbvar() string {
 }
 
 var DB = func() (db *gorm.DB) {
-	if db, err := gorm.Open(postgres.Open(dbvar()), &gorm.Config{}); err != nil {
+	if db, err := gorm.Open(postgres.Open(dbvar()), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	}); err != nil {
 		fmt.Println("Connection to database failed", err)
 		panic(err)
 	} else {
