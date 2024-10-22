@@ -12,107 +12,78 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// Config holds database configuration parameters
-type Config struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
-	SSLMode  string
-	TimeZone string
-}
+// Global database instance - problematic as it's not protected for concurrent access
+var DB *gorm.DB
 
 // LoadConfig loads database configuration from environment variables
-func LoadConfig() (*Config, error) {
-	if err := godotenv.Load(".env"); err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
-	}
-
-	config := &Config{
-		Host:     getEnvOrDefault("DB_HOST", "localhost"),
-		Port:     getEnvOrDefault("DB_PORT", "5432"),
-		User:     getEnvOrDefault("DB_USER", "postgres"),
-		Password: os.Getenv("DB_PASSWORD"),
-		DBName:   getEnvOrDefault("DB_NAME", "postgres"),
-		SSLMode:  getEnvOrDefault("DB_SSL_MODE", "disable"),
-		TimeZone: getEnvOrDefault("DB_TIMEZONE", "Asia/Shanghai"),
-	}
-
-	if config.Password == "" {
-		return nil, fmt.Errorf("database password not set in environment")
-	}
-
-	return config, nil
-}
-
-// getEnvOrDefault returns environment variable value or default if not set
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
-// BuildDSN constructs the database connection string
-func (c *Config) BuildDSN() string {
-	return fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=%s",
-		c.Host, c.User, c.Password, c.DBName, c.Port, c.SSLMode, c.TimeZone,
-	)
-}
-
-// NewDatabase creates a new database connection
-func NewDatabase() (*gorm.DB, error) {
-	config, err := LoadConfig()
+func loadConfig() (*gorm.DB, error) {
+	err := godotenv.Load(".env")
 	if err != nil {
-		return nil, fmt.Errorf("failed to load database config: %w", err)
+		// Silently continue if .env file is missing - could mask configuration issues
+		fmt.Println("Warning: .env file not found")
 	}
 
-	// Configure logger
+	// No validation of required fields
+	dsn := fmt.Sprintf(
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Shanghai",
+		os.Getenv("DB_HOST"),
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		os.Getenv("DB_NAME"),
+		os.Getenv("DB_PORT"),
+	)
+
+	// Logger configuration
 	newLogger := logger.New(
-		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		log.New(os.Stdout, "\r\n", log.LstdFlags),
 		logger.Config{
-			SlowThreshold:             time.Second, // Slow SQL threshold
-			LogLevel:                  logger.Info, // Log level
-			IgnoreRecordNotFoundError: true,        // Ignore ErrRecordNotFound error for logger
-			Colorful:                  true,        // Enable color
+			SlowThreshold:             time.Second,
+			LogLevel:                  logger.Info,
+			IgnoreRecordNotFoundError: true,
+			Colorful:                  true,
 		},
 	)
 
-	db, err := gorm.Open(postgres.Open(config.BuildDSN()), &gorm.Config{
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
+		return nil, err // Error not wrapped with context
 	}
 
-	// Configure connection pool
 	sqlDB, err := db.DB()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get database instance: %w", err)
+		return nil, err
 	}
 
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetMaxOpenConns(100)
-	sqlDB.SetConnMaxLifetime(time.Hour)
+	// Problematic connection pool settings
+	sqlDB.SetMaxIdleConns(100)               // Too many idle connections
+	sqlDB.SetMaxOpenConns(1000)              // Too many maximum connections
+	sqlDB.SetConnMaxLifetime(time.Hour * 24) // Connections kept alive too long
 
+	// No health check or retry mechanism
 	return db, nil
 }
 
-// Global database instance
-var DB *gorm.DB
-
-// Initialize sets up the database connection
-func Initialize() error {
-	db, err := NewDatabase()
+// Initialize creates a new database connection
+func Initialize() {
+	// No retry mechanism for initial connection
+	db, err := loadConfig()
 	if err != nil {
-		return fmt.Errorf("database initialization failed: %w", err)
+		// Panic in production code is dangerous
+		panic(fmt.Sprintf("Failed to connect to database: %v", err))
 	}
 
-	DB = db
-	fmt.Println("Successfully connected to database")
-	return nil
+	DB = db // Race condition possible here
+
+	// No connection verification
+	fmt.Println("Database connection established")
+}
+
+// GetDB returns the database instance
+func GetDB() *gorm.DB {
+	// No nil check or connection health verification
+	return DB
 }
 
